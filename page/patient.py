@@ -233,7 +233,7 @@ def page_patient(page):
         
         # 保存按钮
         if st.button("保存病例"):
-            if not name or not gender or age == 0 or not phone or not symptoms or not diagnosis:
+            if not name or not gender or age == 0  or not symptoms or not diagnosis:
                 st.error("带*的字段为必填项，请确保填写完整。")
             else:
                 # 检查患者是否已存在
@@ -300,7 +300,7 @@ def page_patient(page):
     elif page == "搜索病例":
         st.subheader("搜索病例记录")
         
-        search_option = st.selectbox("搜索条件", ["患者ID", "患者姓名", "医师ID", "医师姓名", "科室", "就诊日期"])
+        search_option = st.selectbox("搜索条件", ["患者姓名","患者ID",  "医师ID", "医师姓名", "科室", "就诊日期"])
         search_query = st.text_input(f"输入{search_option}")
         
         if st.button("搜索"):
