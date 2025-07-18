@@ -1,0 +1,4 @@
+gradio
+openxl
+numpy
+pandas
