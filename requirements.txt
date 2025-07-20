@@ -2,3 +2,4 @@ openxl
 numpy
 pandas
 streamlit
+pymongo
