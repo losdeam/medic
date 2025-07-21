@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import datetime
 from io import BytesIO
-
+import time 
 # 获取医师下拉列表
 def get_doctor_options():
     db = create_connection()
@@ -300,7 +300,11 @@ def search_records(option, query):
 # 删除病例记录
 def delete_record(record_id):
     db = create_connection()
+    if db['records'].find_one({'_id': record_id}) is None:
+        print("记录不存在")
     db['records'].delete_one({'_id': record_id})
+    print(db)
+    print("\n"*5)
 
 # 更新患者信息
 def update_patient(patient_id, name, gender, age, phone,allergy,attention_flag):
@@ -347,12 +351,10 @@ def page_patient(page):
                         st.session_state.patient_input = patient
                     container.button(patient,on_click=update_patient_input, key=f"btn_{patient}")
             if name in all_patients :
-                if all_patients[name][1]:
-                    show_remind_alert("患者有过敏史,请注意")
+                if all_patients[name][1] or all_patients[name][2]:
                     allergy = all_patients[name][1]
-                if all_patients[name][2]:
                     attention_flag = all_patients[name][2]
-                    show_remind_alert("患者被标记为需要特别注意,请注意")
+                    show_remind_alert("请注意")
                 gender = st.text_input("性别*",value=all_patients[name][3],disabled=True)
                 age = st.text_input("年龄*",value=all_patients[name][4],disabled=True)
                 phone = st.text_input("联系电话", value=all_patients[name][5],disabled=True)
@@ -363,7 +365,7 @@ def page_patient(page):
                 
         with col2:
             date = st.date_input("就诊日期*", datetime.date.today())
-            department = st.selectbox("科室*", ["内科", "外科", "儿科", "妇科", "眼科", "口腔科", "皮肤科"])
+            department = st.selectbox("科室*", ["骨科","内科", "外科", "儿科", "妇科", "眼科", "口腔科", "皮肤科"])
 
             # 获取医师列表
             doctor_options = get_doctor_options()
@@ -403,3 +405,94 @@ def page_patient(page):
                 visit_date = date.strftime("%Y-%m-%d")
                 add_record(patient_id, doctor_id, visit_date, department, symptoms, diagnosis, treatment, cost, notes)
                 show_success_alert("病例保存成功！")
+        
+    elif page == "查看病例":
+        st.subheader("病例记录列表")
+        
+        # 获取所有记录
+        records_df = get_all_records()
+        del(records_df["patient_id"])
+        del(records_df["doctor_id"])
+        del(records_df["record_id"])
+        if records_df.empty:
+            st.info("暂无病例记录，请先添加病例。")
+        else:
+            # 显示记录表格
+            st.dataframe(records_df, use_container_width=True)
+            
+            # 分页显示
+            records_per_page = 10
+            total_pages = len(records_df) // records_per_page + (1 if len(records_df) % records_per_page != 0 else 0)
+            
+            if total_pages > 1:
+                col1, col2, col3 = st.columns([1, 1, 1])
+                current_page = col2.number_input("页码", min_value=1, max_value=total_pages, value=1)
+                
+                start_idx = (current_page - 1) * records_per_page
+                end_idx = min(start_idx + records_per_page, len(records_df))
+                
+                st.dataframe(records_df.iloc[start_idx:end_idx], use_container_width=True)
+            
+            # 删除功能
+            st.subheader("删除病例记录")
+            record_id = st.number_input("输入要删除的记录ID",min_value=0,max_value=len(records_df))
+            if st.button("删除记录"):
+                print("1\n"*5)
+                record_id = records_df['_id'][record_id]
+                delete_record(record_id)
+                st.success(f"记录ID {record_id} 已删除！")
+                time.sleep(1)
+                st.rerun()
+    
+    elif page == "搜索病例":
+        st.subheader("搜索病例记录")
+        
+        search_option = st.selectbox("搜索条件", ["患者姓名","患者ID",  "医师ID", "医师姓名", "科室", "就诊日期"])
+        search_query = st.text_input(f"输入{search_option}")
+        
+        if st.button("搜索"):
+            # if not search_query:
+            #     st.warning("请输入搜索内容。")
+            # else:
+            results_df = search_records(search_option, search_query)
+            
+            if results_df.empty:
+                st.info(f"未找到符合条件的病例记录。")
+            else:
+                st.success(f"找到 {len(results_df)} 条记录")
+                st.dataframe(results_df, use_container_width=True)
+    
+    elif page == "导出数据":
+        st.subheader("导出病例数据")
+        
+        # 获取所有记录
+        records_df = get_all_records()
+        
+        if records_df.empty:
+            st.info("暂无病例记录，无法导出。")
+        else:
+            # 导出为CSV
+            csv = records_df.to_csv(sep='\t', na_rep='nan')
+            st.download_button(
+                label="下载CSV文件",
+                data=csv,
+                file_name="病例记录.csv",
+                mime="text/csv"
+            )
+            
+            # 创建Excel文件
+            def to_excel(df):
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df.to_excel(writer, sheet_name='病例记录', index=False)
+                output.seek(0)
+                return output
+            
+            excel_file = to_excel(records_df)
+            st.download_button(
+                label="下载Excel文件",
+                data=excel_file,
+                file_name="病例记录.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            
