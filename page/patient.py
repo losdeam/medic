@@ -230,6 +230,7 @@ def get_records_by_doctor(doctor_id):
     df = pd.DataFrame(list(records))
     return df
 
+#
 # 根据条件搜索病例
 def search_records(option, query):
     db = create_connection()
@@ -303,8 +304,7 @@ def delete_record(record_id):
     if db['records'].find_one({'_id': record_id}) is None:
         print("记录不存在")
     db['records'].delete_one({'_id': record_id})
-    print(db)
-    print("\n"*5)
+
 
 # 更新患者信息
 def update_patient(patient_id, name, gender, age, phone,allergy,attention_flag):
@@ -330,7 +330,7 @@ def page_patient(page):
         # 初始化，后续获取到的话进行更新
         allergy = ""
         attention_flag =""
-
+        last_record_botton = ""
         with col1:
             all_patients = get_patients_options()
             container = st.container()
@@ -358,6 +358,7 @@ def page_patient(page):
                 gender = st.text_input("性别*",value=all_patients[name][3],disabled=True)
                 age = st.text_input("年龄*",value=all_patients[name][4],disabled=True)
                 phone = st.text_input("联系电话", value=all_patients[name][5],disabled=True)
+                last_record_botton = st.button("填充上次病例")
             else:
                 gender = st.selectbox("性别*", ["男", "女", "其他"])
                 age = st.number_input("年龄*", min_value=0, max_value=150, step=1)
@@ -375,13 +376,21 @@ def page_patient(page):
 
             doctor_selection = st.selectbox("主治医生*", list(doctor_options.keys()))
             doctor_id = doctor_options[doctor_selection]
-
-        symptoms = st.text_area("症状描述*", placeholder="详细描述患者症状")
-        diagnosis = st.text_area("诊断结果*", placeholder="填写诊断结果")
-        treatment = st.text_area("治疗方案", placeholder="填写治疗方案")
-        allergy = st.text_area("过敏史", placeholder="填写过敏史")
-        attention_flag =st.checkbox("特殊标记",value= True if attention_flag else False)
-        notes = st.text_area("备注", placeholder="填写其他需要记录的信息")
+        if last_record_botton:
+            patient_record = get_records_by_patient(all_patients[name][0]).iloc[-1].to_dict()
+            symptoms = st.text_area("症状描述*",value=patient_record["symptoms"], placeholder="详细描述患者症状")
+            diagnosis = st.text_area("诊断结果*", value=patient_record["diagnosis"],placeholder="填写诊断结果")
+            treatment = st.text_area("治疗方案", value=patient_record["treatment"],placeholder="填写治疗方案")
+            allergy = st.text_area("过敏史", value=allergy,placeholder="填写过敏史")
+            attention_flag =st.checkbox("特殊标记",value= True if attention_flag else False)
+            notes = st.text_area("备注", value=patient_record["notes"],placeholder="填写其他需要记录的信息")  
+        else:
+            symptoms = st.text_area("症状描述*", placeholder="详细描述患者症状")
+            diagnosis = st.text_area("诊断结果*", placeholder="填写诊断结果")
+            treatment = st.text_area("治疗方案", placeholder="填写治疗方案")
+            allergy = st.text_area("过敏史", placeholder="填写过敏史")
+            attention_flag =st.checkbox("特殊标记",value= True if attention_flag else False)
+            notes = st.text_area("备注", placeholder="填写其他需要记录的信息")
         cost = 0
         # 保存按钮
         if st.button("保存病例"):
@@ -414,9 +423,39 @@ def page_patient(page):
         del(records_df["patient_id"])
         del(records_df["doctor_id"])
         del(records_df["record_id"])
+        key_mapping = {
+            "patient_name": "患者姓名",
+            "gender": "性别",
+            "age": "年龄",
+            "phone": "联系电话",
+            "symptoms": "症状描述",
+            "diagnosis": "诊断结果",
+            "treatment": "治疗方案",
+            "cost": "费用",
+            "notes": "备注",
+            "visit_date": "就诊日期",
+            "department": "科室",
+            "doctor_name": "主治医生",
+
+        }
+
         if records_df.empty:
             st.info("暂无病例记录，请先添加病例。")
         else:
+            records_df = records_df.rename(columns={
+                "_id":"病例编号",
+             'patient_name': '患者姓名',
+            'patient_gender': '性别',
+            'patient_age': '年龄',
+            'doctor_name': '主治医生',
+            'visit_date': '就诊日期',
+            'symptoms': '症状描述',
+            'diagnosis': '诊断结果',
+            "cost": "费用",
+            "doctor_department": "科室",
+            "notes": "备注",
+            'treatment': '治疗方案'
+        })
             # 显示记录表格
             st.dataframe(records_df, use_container_width=True)
             
@@ -437,7 +476,6 @@ def page_patient(page):
             st.subheader("删除病例记录")
             record_id = st.number_input("输入要删除的记录ID",min_value=0,max_value=len(records_df))
             if st.button("删除记录"):
-                print("1\n"*5)
                 record_id = records_df['_id'][record_id]
                 delete_record(record_id)
                 st.success(f"记录ID {record_id} 已删除！")
