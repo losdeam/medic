@@ -352,21 +352,21 @@ def page_patient(page):
                     container.button(patient,on_click=update_patient_input, key=f"btn_{patient}")
             if name in all_patients :
                 if all_patients[name][1] or all_patients[name][2]:
-                    allergy = all_patients[name][1]
+                    allergy_ = all_patients[name][1]
                     attention_flag = all_patients[name][2]
                     show_remind_alert("请注意")
                 gender = st.text_input("性别*",value=all_patients[name][3],disabled=True)
-                age = st.text_input("年龄*",value=all_patients[name][4],disabled=True)
-                phone = st.text_input("联系电话", value=all_patients[name][5],disabled=True)
+                age = st.text_input("年龄",value=all_patients[name][4],disabled=True,key="age")
+                phone = st.text_input("联系电话", value=all_patients[name][5],disabled=True,key="phone")
                 last_record_botton = st.button("填充上次病例")
             else:
-                gender = st.selectbox("性别*", ["男", "女", "其他"])
-                age = st.number_input("年龄*", min_value=0, max_value=150, step=1)
-                phone = st.text_input("联系电话", placeholder="输入手机号码")
+                gender = st.selectbox("性别", ["男", "女", "其他"])
+                age = st.number_input("年龄", min_value=0, max_value=150, step=1,key="age")
+                phone = st.text_input("联系电话", placeholder="输入手机号码",key="phone")
                 
         with col2:
-            date = st.date_input("就诊日期*", datetime.date.today())
-            department = st.selectbox("科室*", ["骨科","内科", "外科", "儿科", "妇科", "眼科", "口腔科", "皮肤科"])
+            date = st.date_input("就诊日期", datetime.date.today())
+            department = st.selectbox("科室", ["骨科","内科", "外科", "儿科", "妇科", "眼科", "口腔科", "皮肤科"])
 
             # 获取医师列表
             doctor_options = get_doctor_options()
@@ -374,27 +374,27 @@ def page_patient(page):
                 st.warning("请先添加医师！")
                 st.stop()
 
-            doctor_selection = st.selectbox("主治医生*", list(doctor_options.keys()))
+            doctor_selection = st.selectbox("主治医生", list(doctor_options.keys()))
             doctor_id = doctor_options[doctor_selection]
+        symptoms = st.text_area("症状描述", placeholder="详细描述患者症状",key = "symptoms")
+        diagnosis = st.text_area("诊断结果", placeholder="填写诊断结果",key = "diagnosis")
+        treatment = st.text_area("治疗方案", placeholder="填写治疗方案",key = "treatment")
+        allergy = st.text_area("过敏史", placeholder="填写过敏史",key = "allergy")
+        attention_flag =st.checkbox("特殊标记",value= True if attention_flag else False,key = "attention_flag")
+        notes = st.text_area("备注", placeholder="填写其他需要记录的信息",key ="notes" )
         if last_record_botton:
             patient_record = get_records_by_patient(all_patients[name][0]).iloc[-1].to_dict()
-            symptoms = st.text_area("症状描述*",value=patient_record["symptoms"], placeholder="详细描述患者症状")
-            diagnosis = st.text_area("诊断结果*", value=patient_record["diagnosis"],placeholder="填写诊断结果")
-            treatment = st.text_area("治疗方案", value=patient_record["treatment"],placeholder="填写治疗方案")
-            allergy = st.text_area("过敏史", value=allergy,placeholder="填写过敏史")
-            attention_flag =st.checkbox("特殊标记",value= True if attention_flag else False)
-            notes = st.text_area("备注", value=patient_record["notes"],placeholder="填写其他需要记录的信息")  
-        else:
-            symptoms = st.text_area("症状描述*", placeholder="详细描述患者症状")
-            diagnosis = st.text_area("诊断结果*", placeholder="填写诊断结果")
-            treatment = st.text_area("治疗方案", placeholder="填写治疗方案")
-            allergy = st.text_area("过敏史", placeholder="填写过敏史")
-            attention_flag =st.checkbox("特殊标记",value= True if attention_flag else False)
-            notes = st.text_area("备注", placeholder="填写其他需要记录的信息")
+            st.session_state.symptoms = patient_record["symptoms"]
+            st.session_state.diagnosis = patient_record["diagnosis"]
+            st.session_state.treatment = patient_record["treatment"]
+            st.session_state.allergy = allergy_
+            st.session_state.attention_flag =  True if attention_flag else False
+            st.session_state.notes = patient_record["notes"]
+
         cost = 0
         # 保存按钮
         if st.button("保存病例"):
-            if not name or not gender or age == 0 or not symptoms or not diagnosis:
+            if not name:
                 st.error("带*的字段为必填项，请确保填写完整。")
             else:
                 # 检查患者是否已存在
@@ -414,7 +414,14 @@ def page_patient(page):
                 visit_date = date.strftime("%Y-%m-%d")
                 add_record(patient_id, doctor_id, visit_date, department, symptoms, diagnosis, treatment, cost, notes)
                 show_success_alert("病例保存成功！")
-        
+                time.sleep(1)
+                st.session_state.symptoms = ""
+                st.session_state.diagnosis = ""
+                st.session_state.treatment = ""
+                st.session_state.allergy = ""
+                st.session_state.attention_flag =  False
+                st.session_state.phone = ""
+                st.session_state.patient_input = ""
     elif page == "查看病例":
         st.subheader("病例记录列表")
         
