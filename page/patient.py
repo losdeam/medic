@@ -4,6 +4,12 @@ import streamlit as st
 import datetime
 from io import BytesIO
 import time 
+# 将特定列移到最前面
+def move_column_to_front(df, column_name):
+    cols = list(df.columns)
+    cols.remove(column_name)
+    new_cols = [column_name] + cols
+    return df[new_cols]
 # 获取医师下拉列表
 def get_doctor_options():
     db = create_connection()
@@ -426,6 +432,7 @@ def page_patient(page):
                 st.session_state.notes = ""
                 st.rerun()
     elif page == "查看病例":
+
         st.subheader("病例记录列表")
         
         # 获取所有记录
@@ -453,8 +460,8 @@ def page_patient(page):
             st.info("暂无病例记录，请先添加病例。")
         else:
             records_df = records_df.rename(columns={
-                "_id":"病例编号",
-             'patient_name': '患者姓名',
+            "_id":"病例编号",
+            'patient_name': '患者姓名',
             'patient_gender': '性别',
             'patient_age': '年龄',
             'doctor_name': '主治医生',
@@ -466,9 +473,10 @@ def page_patient(page):
             "notes": "备注",
             'treatment': '治疗方案'
         })
-            # # 显示记录表格
-            # st.dataframe(records_df, use_container_width=True)
-            
+
+            records_df = move_column_to_front(records_df, "患者姓名")
+            records_df = move_column_to_front(records_df, "就诊日期")
+            del records_df["病例编号"]
             # 分页显示
             records_per_page = 10
             total_pages = len(records_df) // records_per_page + (1 if len(records_df) % records_per_page != 0 else 0)
@@ -503,7 +511,23 @@ def page_patient(page):
             #     st.warning("请输入搜索内容。")
             # else:
             results_df = search_records(search_option, search_query)
-            
+            results_df = results_df.rename(columns={
+            "_id":"病例编号",
+            'patient_name': '患者姓名',
+            'patient_gender': '性别',
+            'patient_age': '年龄',
+            'doctor_name': '主治医生',
+            'visit_date': '就诊日期',
+            'symptoms': '症状描述',
+            'diagnosis': '诊断结果',
+            "cost": "费用",
+            "doctor_department": "科室",
+            "notes": "备注",
+            'treatment': '治疗方案'
+        })
+            results_df = move_column_to_front(results_df, "患者姓名")
+            results_df = move_column_to_front(results_df, "就诊日期")
+            del results_df["病例编号"]
             if results_df.empty:
                 st.info(f"未找到符合条件的病例记录。")
             else:
