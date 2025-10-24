@@ -415,6 +415,7 @@ def page_patient(page):
                 add_record(patient_id, doctor_id, visit_date, department, symptoms, diagnosis, treatment, cost, notes)
                 show_success_alert("病例保存成功！")
                 time.sleep(1)
+                st.session_state.clear()
                 st.session_state.symptoms = ""
                 st.session_state.diagnosis = ""
                 st.session_state.treatment = ""
@@ -422,6 +423,7 @@ def page_patient(page):
                 st.session_state.attention_flag =  False
                 st.session_state.phone = ""
                 st.session_state.patient_input = ""
+                st.rerun()
     elif page == "查看病例":
         st.subheader("病例记录列表")
         
