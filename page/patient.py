@@ -528,6 +528,9 @@ def page_patient(page):
             results_df = move_column_to_front(results_df, "患者姓名")
             results_df = move_column_to_front(results_df, "就诊日期")
             del results_df["病例编号"]
+            del results_df["patient_id"]
+            del results_df["doctor_id"]
+            del results_df["record_id"]
             if results_df.empty:
                 st.info(f"未找到符合条件的病例记录。")
             else:
