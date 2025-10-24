@@ -466,8 +466,8 @@ def page_patient(page):
             "notes": "备注",
             'treatment': '治疗方案'
         })
-            # 显示记录表格
-            st.dataframe(records_df, use_container_width=True)
+            # # 显示记录表格
+            # st.dataframe(records_df, use_container_width=True)
             
             # 分页显示
             records_per_page = 10
