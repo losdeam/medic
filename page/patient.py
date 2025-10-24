@@ -423,6 +423,7 @@ def page_patient(page):
                 st.session_state.attention_flag =  False
                 st.session_state.phone = ""
                 st.session_state.patient_input = ""
+                st.session_state.notes = ""
                 st.rerun()
     elif page == "查看病例":
         st.subheader("病例记录列表")
