@@ -1,14 +1,11 @@
 import uuid
 from pymongo import MongoClient
-# 在 utils.py 中添加（复用性更高）
-import streamlit as st
-def show_remind_alert(message):
-    """显示可关闭的重点提示弹窗"""
-    st.toast(message, icon="⭐")
-def show_success_alert(message):
-    """显示可关闭的成功弹窗"""
-    st.toast(message, icon="✅")
-# 生成唯一的 ID
+
+# 数据库连接
+def create_connection():
+    client = MongoClient('mongodb://localhost:27017/')
+    db = client['medical_records']
+    return db# 生成唯一的 ID
 def generate_id(prefix):
     return f"{prefix}_{str(uuid.uuid4())[:8]}"
 

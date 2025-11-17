@@ -4,4 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "gradio>=5.49.1",
+    "openpyxl>=3.1.5",
+    "pymongo>=4.15.4",
+    "streamlit>=1.51.0",
+    "xlsxwriter>=3.2.9",
+]
