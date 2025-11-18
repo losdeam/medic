@@ -4,7 +4,7 @@ def page_edit_doc():
     doc_ids = [d['doctor_id'] for d in create_connection()['doctors'].find()]
     edit_doc_id = gr.Dropdown(doc_ids, label="选择医师ID")
     edit_name = gr.Textbox(label="医师姓名")
-    edit_dept = gr.Dropdown(["内科", "外科", "儿科", "妇科", "眼科", "口腔科", "皮肤科"], label="所属科室")
+    edit_dept = gr.Dropdown(["骨科","内科", "外科", "儿科", "妇科", "眼科", "口腔科", "皮肤科"], label="所属科室")
     edit_title = gr.Textbox(label="职称")
     edit_phone = gr.Textbox(label="联系电话")
     edit_email = gr.Textbox(label="电子邮箱")

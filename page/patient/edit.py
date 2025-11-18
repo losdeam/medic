@@ -29,7 +29,7 @@ def page_edit_patient():
             with gr.Column(scale=1):
                 doctors_list = [d['name'] for d in create_connection()['doctors'].find()]
                 edit_doctor_name = gr.Dropdown(doctors_list, label="接诊医师*")
-                edit_department = gr.Dropdown(["内科", "外科", "儿科", "妇科", "眼科", "口腔科", "皮肤科"], label="科室*")
+                edit_department = gr.Dropdown(["骨科","内科", "外科", "儿科", "妇科", "眼科", "口腔科", "皮肤科"], label="科室*")
                 edit_visit_date = gr.DateTime(label="就诊日期*")
             
         edit_cost = gr.Textbox(label="费用")
