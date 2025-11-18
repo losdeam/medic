@@ -257,3 +257,53 @@ def get_all_records():
             'cost': '费用'
         }
     )
+
+
+# 在文件末尾添加
+def search_patients(name_prefix):
+    """根据姓名前缀搜索病人，返回匹配的前3个结果"""
+    db = create_connection()
+    if not name_prefix:
+        return []
+    
+    # 模糊匹配姓名（不区分大小写），限制返回3条
+    patients = db['patients'].find(
+        {'name': {'$regex': f'^{name_prefix}', '$options': 'i'}},
+        {'name': 1, 'gender': 1, 'age': 1, 'phone': 1, 'allergy': 1, 'attention_flag': 1}
+    ).limit(3)
+    
+    return list(patients)
+
+def get_patient_by_name(name):
+    """根据姓名获取病人详细信息"""
+    db = create_connection()
+    return db['patients'].find_one({'name': name})
+
+# 新增：更新病人建议列表
+def update_patient_suggestions(input_text):
+    if not input_text:
+        return gr.update(choices=[], visible=False)
+    
+    matched_patients = search_patients(input_text)
+    if not matched_patients:
+        return gr.update(choices=[], visible=False)
+    
+    choices = [p['name'] for p in matched_patients]
+    return gr.update(choices=choices, visible=True)
+
+# 新增：填充选中的病人信息
+def fill_patient_info(selected_name):
+    if not selected_name:
+        return [None, None, None, None, False]
+    
+    patient = get_patient_by_name(selected_name)
+    if not patient:
+        return [None, None, None, None, False]
+    
+    return [
+        patient.get('gender'),
+        patient.get('age'),
+        patient.get('phone'),
+        patient.get('allergy'),
+        patient.get('attention_flag', False)
+    ]
