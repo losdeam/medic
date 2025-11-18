@@ -24,4 +24,4 @@ def create_interface():
 # 启动应用
 if __name__ == "__main__":
     app = create_interface()
-    app.launch(server_name="0.0.0.0", server_port=7860,debug=True)
+    app.launch(server_name="0.0.0.0", server_port=8501,debug=True)
