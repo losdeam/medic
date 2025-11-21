@@ -3,6 +3,9 @@ from .utils import *
 import datetime
 def signal():
     gr.Success("处理成功！",2)
+
+init_doctor_name = None
+init_department = None
 def page_init():
     return [
         "",  # patient_name 清空
@@ -11,8 +14,8 @@ def page_init():
         "",  # phone 清空
         "",  # allergy 清空
         False,  # attention 未勾选
-        None,  # doctor_name 重置
-        None,  # department 重置
+        init_doctor_name,  # doctor_name 重置
+        init_department,  # department 重置
         datetime.datetime.now(),  # visit_date 当前时间
         "",  # symptoms 清空
         "",  # diagnosis 清空
@@ -42,6 +45,8 @@ def update_patient_suggestions(input_text):
         gr.update(value=btn3_value, visible=btn3_visible)   # 按钮3文本
     ]
 def page_add_patient():
+    global init_department
+    global init_doctor_name
     with gr.Row():
         with gr.Column(scale=1):
             # 修改为普通Textbox用于输入
@@ -61,23 +66,25 @@ def page_add_patient():
         with gr.Column(scale=1):
             doctors = {item['name']: item for item in create_connection()['doctors'].find()}
             doctor_name = gr.Dropdown(doctors.keys(), label="接诊医师*", value=list(doctors.keys())[0] if doctors else None)
-            
             def update_department(doctor_name):
                 if doctor_name and doctor_name in doctors:
                     return doctors[doctor_name]['department']
                 return ""
-            
+
             def get_initial_department():
                 if doctors:
                     first_doctor = list(doctors.keys())[0]
                     return doctors[first_doctor]['department']
                 return "暂无科室信息"
+
             
             department = gr.Textbox(
                 interactive=False, 
                 label="科室",
                 value=get_initial_department()
             )
+            init_department = department.value
+            init_doctor_name = doctor_name.value
             visit_date = gr.DateTime(label="就诊日期*", value=datetime.datetime.now())
     
     doctor_name.change(
