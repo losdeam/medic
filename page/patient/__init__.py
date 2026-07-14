@@ -10,6 +10,5 @@ def page_patient():
         # 整合后的查看/搜索/编辑病例
         with gr.Tab("病例查询与编辑"):
             page_edit_patient()
-        # 导出数据
-        # with gr.Tab("导出数据"):
-        #     page_output_patient()
+        with gr.Tab("导入/导出数据"):
+            page_output_patient()

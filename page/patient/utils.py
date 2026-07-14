@@ -307,3 +307,115 @@ def fill_patient_info(selected_name):
         patient.get('allergy'),
         patient.get('attention_flag', False)
     ]
+
+
+def export_data():
+    from bson import json_util
+    import tempfile, os
+
+    db = create_connection()
+    data = {
+        'version': 1,
+        'exported_at': datetime.datetime.now().isoformat(),
+        'collections': {
+            'patients': list(db['patients'].find({})),
+            'doctors': list(db['doctors'].find({})),
+            'records': list(db['records'].find({})),
+        }
+    }
+
+    fd, path = tempfile.mkstemp(suffix='.json', prefix='medic_export_')
+    with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        json_util.dump(data, f, ensure_ascii=False, indent=2)
+
+    return path
+
+
+def export_csv():
+    import tempfile, os
+
+    df = get_all_records()
+    fd, path = tempfile.mkstemp(suffix='.csv', prefix='medic_export_')
+    os.close(fd)
+    df.to_csv(path, index=False, encoding='utf-8-sig')
+    return path
+
+
+def export_xlsx():
+    import tempfile, os
+
+    df = get_all_records()
+    fd, path = tempfile.mkstemp(suffix='.xlsx', prefix='medic_export_')
+    os.close(fd)
+    with pd.ExcelWriter(path, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='病例记录')
+        worksheet = writer.sheets['病例记录']
+        for i, col in enumerate(df.columns):
+            max_width = max(df[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.set_column(i, i, min(max_width, 40))
+    return path
+
+
+def import_data(file_obj):
+    from bson import json_util
+
+    if file_obj is None:
+        return "请选择要导入的文件"
+
+    with open(file_obj, 'r', encoding='utf-8') as f:
+        data = json_util.load(f)
+
+    version = data.get('version', 0)
+    if version != 1:
+        return "不支持的数据格式版本"
+
+    collections = data.get('collections', {})
+    db = create_connection()
+
+    counts = {}
+    for coll_name in ['patients', 'doctors', 'records']:
+        docs = collections.get(coll_name, [])
+        if not docs:
+            counts[coll_name] = "0"
+            continue
+
+        new_count = update_count = 0
+        for doc in docs:
+            doc.pop('_id', None)
+            if coll_name == 'patients':
+                existing = db['patients'].find_one({'patient_id': doc['patient_id']})
+                if existing:
+                    db['patients'].replace_one({'patient_id': doc['patient_id']}, doc)
+                    update_count += 1
+                else:
+                    db['patients'].insert_one(doc)
+                    new_count += 1
+            elif coll_name == 'doctors':
+                existing = db['doctors'].find_one({'doctor_id': doc['doctor_id']})
+                if existing:
+                    db['doctors'].replace_one({'doctor_id': doc['doctor_id']}, doc)
+                    update_count += 1
+                else:
+                    db['doctors'].insert_one(doc)
+                    new_count += 1
+            else:  # records
+                existing = db['records'].find_one({
+                    'patient_id': doc['patient_id'],
+                    'doctor_id': doc['doctor_id'],
+                    'visit_date': doc['visit_date'],
+                    'symptoms': doc['symptoms'],
+                })
+                if existing:
+                    db['records'].replace_one({'_id': existing['_id']}, doc)
+                    update_count += 1
+                else:
+                    db['records'].insert_one(doc)
+                    new_count += 1
+
+        counts[coll_name] = f"{new_count} 新增, {update_count} 更新"
+
+    return (
+        f"导入完成：患者 {counts.get('patients', 0)}，"
+        f"医师 {counts.get('doctors', 0)}，"
+        f"病例 {counts.get('records', 0)}"
+    )

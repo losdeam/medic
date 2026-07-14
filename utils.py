@@ -1,21 +1,14 @@
 import uuid
 from pymongo import MongoClient
 
-# 数据库连接
-def create_connection():
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client['medical_records']
-    return db# 生成唯一的 ID
-def generate_id(prefix):
-    return f"{prefix}_{str(uuid.uuid4())[:8]}"
-
-# 连接 MongoDB 数据库
 def create_connection():
     client = MongoClient('mongodb://localhost:27017/')
     db = client['medical_records']
     return db
 
-# 初始化 MongoDB 集合
+def generate_id(prefix):
+    return f"{prefix}_{str(uuid.uuid4())[:8]}"
+
 def init_tables():
     global patients
     global doctors
