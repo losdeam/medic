@@ -1,7 +1,11 @@
 from .utils import *
 import gradio as gr
 def page_edit_doc():
-    doc_ids = [d['doctor_id'] for d in create_connection()['doctors'].find()]
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute("SELECT doctor_id FROM doctors")
+    doc_ids = [r['doctor_id'] for r in c.fetchall()]
+    conn.close()
     edit_doc_id = gr.Dropdown(doc_ids, label="选择医师ID")
     edit_name = gr.Textbox(label="医师姓名")
     edit_dept = gr.Dropdown(["骨科","内科", "外科", "儿科", "妇科", "眼科", "口腔科", "皮肤科"], label="所属科室")

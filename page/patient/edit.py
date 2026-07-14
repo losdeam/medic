@@ -1,5 +1,4 @@
 import datetime
-from bson import ObjectId
 import gradio as gr
 from .utils import *
 
@@ -27,7 +26,11 @@ def page_edit_patient():
                 edit_attention = gr.Checkbox(label="重点关注")
             
             with gr.Column(scale=1):
-                doctors_list = [d['name'] for d in create_connection()['doctors'].find()]
+                conn = create_connection()
+                c = conn.cursor()
+                c.execute("SELECT name FROM doctors")
+                doctors_list = [r['name'] for r in c.fetchall()]
+                conn.close()
                 edit_doctor_name = gr.Dropdown(doctors_list, label="接诊医师*")
                 edit_department = gr.Dropdown(["骨科","内科", "外科", "儿科", "妇科", "眼科", "口腔科", "皮肤科"], label="科室*")
                 edit_visit_date = gr.DateTime(label="就诊日期*")
@@ -55,7 +58,7 @@ def page_edit_patient():
     def open_edit_modal(event: gr.SelectData):
         if isinstance(event.value,str)  and event.value.startswith("编辑_"):
             rid = event.value.split("_")[1]
-            record = get_record_by_id(ObjectId(rid))
+            record = get_record_by_id(int(rid))
             if record:
                 object_visit_date = record['visit_date'] if isinstance(record['visit_date'], datetime.datetime) else datetime.datetime.strptime(record['visit_date'], '%Y-%m-%d')
                 # 分别更新每个组件
@@ -89,7 +92,7 @@ def page_edit_patient():
     
     # 保存修改
     def save_edit(rid, pname, gender, age, phone, allergy, attention, dname, dept, vdate, symp, diag, treat, cost, notes):
-        result = update_record(ObjectId(rid), pname, gender, age, phone, allergy, attention,
+        result = update_record(int(rid), pname, gender, age, phone, allergy, attention,
                                 dname, dept, vdate, symp, diag, treat, cost, notes)
         return {
             edit_status: result,

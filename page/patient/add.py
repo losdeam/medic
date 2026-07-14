@@ -64,7 +64,11 @@ def page_add_patient():
             attention = gr.Checkbox(label="重点关注")
         
         with gr.Column(scale=1):
-            doctors = {item['name']: item for item in create_connection()['doctors'].find()}
+            conn = create_connection()
+            c = conn.cursor()
+            c.execute("SELECT * FROM doctors")
+            doctors = {r['name']: dict(r) for r in c.fetchall()}
+            conn.close()
             doctor_name = gr.Dropdown(doctors.keys(), label="接诊医师*", value=list(doctors.keys())[0] if doctors else None)
             def update_department(doctor_name):
                 if doctor_name and doctor_name in doctors:
