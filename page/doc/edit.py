@@ -22,7 +22,7 @@ def page_edit_doc():
     )
 
     # 删除医师
-    with gr.Tab("删除医师"):
+    with gr.Tab("🗑️ 删除医师"):
         del_doc_id = gr.Dropdown(doc_ids, label="选择要删除的医师ID")
         del_btn = gr.Button("确认删除")
         del_status = gr.Textbox(label="状态", interactive=False)
