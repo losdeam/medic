@@ -27,7 +27,7 @@ jobs:
           pip install pyinstaller gradio pandas openpyxl xlsxwriter numpy
 
       - name: Build EXE
-        run: python scripts/build.py
+        run: python scripts/build/build.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
