@@ -32,6 +32,10 @@ MANIFEST
 *.manifest
 *.spec
 
+# Build venv
+_build_venv/
+medic.spec
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

@@ -56,33 +56,40 @@ def page_edit_patient():
     
     # 处理编辑按钮点击
     def open_edit_modal(event: gr.SelectData):
-        if isinstance(event.value,str)  and event.value.startswith("编辑_"):
-            rid = event.value.split("_")[1]
-            record = get_record_by_id(int(rid))
-            if record:
-                object_visit_date = record['visit_date'] if isinstance(record['visit_date'], datetime.datetime) else datetime.datetime.strptime(record['visit_date'], '%Y-%m-%d')
-                # 分别更新每个组件
-                return (
-                    gr.update(visible=True),  # edit_modal
-                    gr.update(value=rid),     # record_id
-                    gr.update(value=record['patient_info']['name']),      # edit_patient_name
-                    gr.update(value=record['patient_info']['gender']),    # edit_gender
-                    gr.update(value=record['patient_info']['age']),       # edit_age
-                    gr.update(value=record['patient_info']['phone']),     # edit_phone
-                    gr.update(value=record['patient_info']['allergy']),   # edit_allergy
-                    gr.update(value=record['patient_info']['attention_flag']),  # edit_attention
-                    gr.update(value=record['doctor_info']['name']),       # edit_doctor_name
-                    gr.update(value=record['department']),                # edit_department
-                    gr.update(value=object_visit_date),  # edit_visit_date
-                    gr.update(value=record['symptoms']),                  # edit_symptoms
-                    gr.update(value=record['diagnosis']),                 # edit_diagnosis
-                    gr.update(value=record['treatment']),                 # edit_treatment
-                    gr.update(value=record['cost']),                      # edit_cost
-                    gr.update(value=record.get('notes', '')),             # edit_notes
-                    gr.update(value="")                                   # edit_status
-                )
-            # 返回空更新
-        return [gr.update()] * 17  # 17个组件的空更新
+        try:
+            if isinstance(event.value,str)  and event.value.startswith("编辑_"):
+                rid = event.value.split("_")[1]
+                record = get_record_by_id(int(rid))
+                if record:
+                    v = record['visit_date']
+                    if isinstance(v, datetime.datetime):
+                        object_visit_date = v
+                    elif isinstance(v, (int, float)):
+                        object_visit_date = datetime.datetime.fromtimestamp(v)
+                    else:
+                        object_visit_date = datetime.datetime.strptime(v, '%Y-%m-%d %H:%M:%S')
+                    return (
+                        gr.update(visible=True),  # edit_modal
+                        gr.update(value=rid),     # record_id
+                        gr.update(value=record['patient_info']['name']),      # edit_patient_name
+                        gr.update(value=record['patient_info']['gender']),    # edit_gender
+                        gr.update(value=record['patient_info']['age']),       # edit_age
+                        gr.update(value=record['patient_info']['phone']),     # edit_phone
+                        gr.update(value=record['patient_info']['allergy']),   # edit_allergy
+                        gr.update(value=record['patient_info']['attention_flag']),  # edit_attention
+                        gr.update(value=record['doctor_info']['name']),       # edit_doctor_name
+                        gr.update(value=record['department']),                # edit_department
+                        gr.update(value=object_visit_date),  # edit_visit_date
+                        gr.update(value=record['symptoms']),                  # edit_symptoms
+                        gr.update(value=record['diagnosis']),                 # edit_diagnosis
+                        gr.update(value=record['treatment']),                 # edit_treatment
+                        gr.update(value=record['cost']),                      # edit_cost
+                        gr.update(value=record.get('notes', '')),             # edit_notes
+                        gr.update(value="")                                   # edit_status
+                    )
+            return [gr.update()] * 17
+        except Exception as e:
+            return [gr.update()] * 16 + [gr.update(value=f"打开编辑失败: {e}")]
     
     records_df.select(open_edit_modal, outputs=[edit_modal, record_id, edit_patient_name, edit_gender,
                                                 edit_age, edit_phone, edit_allergy, edit_attention,
